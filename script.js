@@ -96,8 +96,8 @@ function calcularPERT() {
                 for (const ant_act of grafo.buscarNodo(nds).anterior) {
                     for (const pre_act of precedentes) {
                         if (pre_act == ant_act.actividad_id) {
-                            // console.log(`Agregado (nodo existente)[${grafo.buscarNodo(nds).id}]:`, grafo.buscarNodo(nds))
                             grafo.buscarNodo(nds).siguiente.push(actividad);
+                            // console.log(`Agregado (nodo existente)[${grafo.buscarNodo(nds).id}]:`, grafo.buscarNodo(nds))
                             agregada = true;
                         }
                     }
@@ -105,17 +105,14 @@ function calcularPERT() {
             }
 
             if (!agregada) {
-                grafo.crearNodo(node_id + 1);
+                grafo.crearNodo(node_id + 1).siguiente.push(actividad);
                 for (let nds = 1; nds <= node_id; nds++) {
                     for (const next_act of grafo.buscarNodo(nds).siguiente) {
                         for (const pre_act of precedentes) {
                             if (pre_act == next_act.actividad_id) {
                                 grafo.buscarNodo(node_id + 1).anterior.push(next_act);
-                                grafo.buscarNodo(node_id + 1).siguiente.push(actividad);
-                                // console.log(grafo.buscarNodo(nds).id);
                                 grafo.buscarNodo(node_id + 1).last_id.push(grafo.buscarNodo(nds).id);
-                                // console.log(grafo.buscarNodo(node_id + 1).last_id);
-                                grafo.buscarNodo(nds).next_id.push(grafo.buscarNodo(node_id + 1).id);
+                                grafo.buscarNodo(nds).next_id.push(grafo.buscarNodo(node_id + 1).id);                                
                             }
                         }
                     }
@@ -125,9 +122,10 @@ function calcularPERT() {
             }
             
         }
-        console.log("Termina una actividad");
+        // console.log("Termina una actividad");
     });
-
+    
+    console.log("[Nodos]");
     for (let nds = 1; nds <= node_id; nds++) {
         console.log(grafo.buscarNodo(nds));
     }
