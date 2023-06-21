@@ -80,30 +80,29 @@ function calcularPERT() {
         // Agregar la actividad al grafo
         if (node_id == 0) {
             grafo.crearNodo(node_id + 1).siguiente.push(actividad);
-            // console.log(`Agregado (nodo inicial)[${grafo.buscarNodo(node_id + 1).id}]:`, grafo.buscarNodo(node_id + 1))
             node_id++;
         }
 
         else if (precedentes.length == 0) {
             grafo.buscarNodo(node_id).siguiente.push(actividad);
-            // console.log(`Agregado (nodo existente inicial)[${grafo.buscarNodo(node_id).id}]:`, grafo.buscarNodo(node_id));
         }
 
         else {
 
+            // Revisa si ya hay un nodo existente
             let agregada = false;
             for (let nds = 1; nds <= node_id; nds++) {
                 for (const ant_act of grafo.buscarNodo(nds).anterior) {
                     for (const pre_act of precedentes) {
                         if (pre_act == ant_act.actividad_id) {
                             grafo.buscarNodo(nds).siguiente.push(actividad);
-                            // console.log(`Agregado (nodo existente)[${grafo.buscarNodo(nds).id}]:`, grafo.buscarNodo(nds))
                             agregada = true;
                         }
                     }
                 }
             }
 
+            // Si no, crea un nuevo nodo
             if (!agregada) {
                 grafo.crearNodo(node_id + 1).siguiente.push(actividad);
                 for (let nds = 1; nds <= node_id; nds++) {
@@ -117,20 +116,60 @@ function calcularPERT() {
                         }
                     }
                 }
-                // console.log(`Agregado (nodo nuevo)[${grafo.buscarNodo(node_id + 1).id}]:`, grafo.buscarNodo(node_id + 1))
                 node_id++;
             }
             
         }
-        // console.log("Termina una actividad");
     });
-    
+
+    // Convertir filasActividad en un arreglo
+    var filasActividadArray = Array.from(filasActividad);
+
+    // Obtener todas las actividades ingresadas
+    const actividadesIngresadas = filasActividadArray.map(fila => parseInt(fila.childNodes[0].id));
+
+    // Encontrar las actividades que no han sido agregadas como "anterior"
+    const actividadesFaltantes = actividadesIngresadas.filter(actividad => {
+        // Revisar nodo por nodo para encontrar actividades faltantes
+        for (let nds = 1; nds <= node_id; nds++) {
+            var nodo_aux = grafo.buscarNodo(nds);
+
+            for (const ant_act of nodo_aux.anterior) {
+                if (ant_act.actividad_id === actividad) {
+                    return false;
+                }
+            }
+        }
+        return true;
+    });
+
+    // Revisar nodo por nodo para encontrar actividades faltantes
+    if (actividadesFaltantes.length > 0) {
+
+        // Agregar un último nodo con las actividades faltantes
+        const nuevoNodo = grafo.crearNodo(node_id + 1);
+
+        for (let nds = 1; nds <= node_id; nds++) {
+            const nodo = grafo.buscarNodo(nds);
+
+            for (const act_id of actividadesFaltantes) {
+                for (const act_nodo of nodo.siguiente) {
+                    if (act_id == act_nodo.actividad_id) {
+
+                        nuevoNodo.anterior.push(act_nodo);
+                        nuevoNodo.last_id.push(nodo.id);
+                        nodo.next_id.push(nuevoNodo.id);   
+                    }
+                }
+            }
+        }
+        node_id++;
+    }
+  
     console.log("[Nodos]");
     for (let nds = 1; nds <= node_id; nds++) {
         console.log(grafo.buscarNodo(nds));
     }
-
-    // console.log("Actividades:", Array.from(grafo.nodos.values()));
 
     // Limpiar contenido
     // tabla.innerHTML = "";
