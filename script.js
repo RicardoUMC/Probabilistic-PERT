@@ -1,6 +1,8 @@
 class Nodo {
     constructor(id) {
         this.id = id;
+        this.next_id = [];
+        this.last_id = [];
         this.anterior = [];
         this.siguiente = [];
     }
@@ -14,6 +16,8 @@ class Grafo {
     crearNodo(id) {
         const nuevoNodo = new Nodo(id);
         this.nodos.set(id, nuevoNodo);
+        nuevoNodo.next_id = [];
+        nuevoNodo.last_id = [];
         return nuevoNodo;
     }
 
@@ -57,7 +61,7 @@ function calcularPERT() {
 
     // Objeto para almacenar las actividades como un grafo
     var grafo = new Grafo();
-    var node_id = 1;
+    var node_id = 0;
 
     // Recorrer las filas de actividad
     filasActividad.forEach(function (fila) {
@@ -72,108 +76,62 @@ function calcularPERT() {
         actividad.varianza = ((actividad.pesimista - actividad.optimista) / 6) ^ 2;
 
         // Agregar la actividad al grafo
-        if (node_id == 1) {
-            grafo.crearNodo(node_id).siguiente.push(actividad)
-            console.log(`Agregado (nodo inicial)[${grafo.buscarNodo(node_id).id}]:`, grafo.buscarNodo(node_id))
+        if (node_id == 0) {
+            grafo.crearNodo(node_id + 1).siguiente.push(actividad);
+            // console.log(`Agregado (nodo inicial)[${grafo.buscarNodo(node_id + 1).id}]:`, grafo.buscarNodo(node_id + 1))
             node_id++;
         }
 
         else {
             precedentes = fila.childNodes[1].value === '' ? [] : fila.childNodes[1].value.split(",");
 
-            let agregado = false;
-            for (let nds = 1; nds < node_id; nds++) {
+            if (precedentes.length == 0) {
+                grafo.buscarNodo(node_id).siguiente.push(actividad);
+                // console.log(`Agregado (nodo existente inicial)[${grafo.buscarNodo(node_id).id}]:`, grafo.buscarNodo(node_id));
+            }
+
+            let agregada = false;
+            for (let nds = 1; nds <= node_id; nds++) {
                 for (const ant_act of grafo.buscarNodo(nds).anterior) {
                     for (const pre_act of precedentes) {
                         if (pre_act == ant_act.actividad_id) {
-                            console.log(`Agregado (nodo existente)[${grafo.buscarNodo(nds).id}]:`, grafo.buscarNodo(nds))
+                            // console.log(`Agregado (nodo existente)[${grafo.buscarNodo(nds).id}]:`, grafo.buscarNodo(nds))
                             grafo.buscarNodo(nds).siguiente.push(actividad);
-                            agregado = true;
+                            agregada = true;
                         }
                     }
                 }
             }
 
-            if (!agregado) {
-                grafo.crearNodo(node_id);
-                for (let nds = 1; nds < node_id; nds++) {
+            if (!agregada) {
+                grafo.crearNodo(node_id + 1);
+                for (let nds = 1; nds <= node_id; nds++) {
                     for (const next_act of grafo.buscarNodo(nds).siguiente) {
+                        console.log("Precedentes:",precedentes);
                         for (const pre_act of precedentes) {
                             if (pre_act == next_act.actividad_id) {
-                                console.log(`Agregado (nodo nuevo)[${grafo.buscarNodo(node_id).id}]:`, grafo.buscarNodo(node_id))
-                                grafo.buscarNodo(node_id).anterior.push(next_act);
-                                grafo.buscarNodo(node_id).siguiente.push(actividad);
-                                node_id++;
+                                grafo.buscarNodo(node_id + 1).anterior.push(next_act);
+                                grafo.buscarNodo(node_id + 1).siguiente.push(actividad);
+                                // console.log(grafo.buscarNodo(nds).id);
+                                grafo.buscarNodo(node_id + 1).last_id.push(grafo.buscarNodo(nds).id);
+                                console.log(grafo.buscarNodo(node_id + 1).last_id);
+                                grafo.buscarNodo(nds).next_id.push(grafo.buscarNodo(node_id + 1).id); 
                             }
-
                         }
                     }
                 }
+                console.log(`Agregado (nodo nuevo)[${grafo.buscarNodo(node_id + 1).id}]:`, grafo.buscarNodo(node_id + 1))
+                node_id++;
             }
+            
         }
-
-
-        // for (let nds = 1; nds < node_id; nds++) {
-        //     for (const pre_act of precedentes) {
-        //         for (const next_act of grafo.buscarNodo(nds).siguiente) {
-        //             if (pre_act == next_act.actividad_id) {
-        //                 grafo.buscarNodo(node_id).anterior.push(next_act);
-        //             }
-        //         }
-        //     }
-        // }
-        // node_id++;
-
-        // // grafo.buscarNodo(node_id).push(actividad.id);
-        // // grafo.buscarNodo(node_id).optimista = actividad.optimista;
-        // // grafo.buscarNodo(node_id).masProbable = actividad.masProbable;
-        // // grafo.buscarNodo(node_id).pesimista = actividad.pesimista;
-        // // grafo.buscarNodo(node_id).promedio = actividad.promedio;
-        
-        // if (precedentes.length == 0) {
-
-        // }
-        
-        // // Verificar si la actividad tiene precedentes
-        // if (precedentes) {
-        //     var precedentes = precedentes;
-
-        //     // Agregar la actividad actual como sucesora de cada precedente
-        //     precedentes.forEach(function (precedente) {
-        //         precedente = precedente.trim();
-
-        //         // Verificar si el precedente existe en el grafo
-        //         if (grafo.buscarNodo(precedente)) {
-        //             // Agregar la actividad actual como sucesora del precedente
-        //             grafo.agregarElementoArray(grafo.buscarNodo(precedente), 'siguiente', actividad.actividad_id);
-        //         }
-        //     });
-        // }
     });
 
-    // Buscar nodos sin consecuentes y fusionarlos en uno solo
-    // var nodosSinConsecuentes = Array.from(grafo.nodos.values()).filter(function (nodo) {
-    //     return nodo.siguiente.length === 0;
-    // });
+    /* for (let nds = 1; nds <= node_id; nds++) {
+        console.log(grafo.buscarNodo(nds));
+    } */
 
-    // if (nodosSinConsecuentes.length > 1) {
-    //     var nodoFusionado = grafo.crearNodo(nodes);
-    //     nodoFusionado.anterior = [];
-    //     nodoFusionado.siguiente = [];
-    //     nodes++;
-
-    //     nodosSinConsecuentes.forEach(function (nodo) {
-    //         nodoFusionado.siguiente = nodoFusionado.siguiente.concat(nodo.siguiente);
-    //         grafo.nodos.delete(nodo.id);
-    //     });
-
-    //     nodoFusionado.promedio /= nodosSinConsecuentes.length;
-
-    //     // Agregar el nodo fusionado al grafo
-    //     grafo.nodos.set(nodoFusionado.id, nodoFusionado);
-    // }
-
-    console.log("Actividades:", Array.from(grafo.nodos.values()));
+    // console.log("Actividades:", Array.from(grafo.nodos.values()));
 
     // Limpiar contenido
     // tabla.innerHTML = "";
@@ -229,7 +187,7 @@ function prob_pert(grafo) {
     for (var actividadId in duraciones) {
         if (duraciones[actividadId] > duracionTotal) {
             duracionTotal = duraciones[actividadId];
-            console.log("Entro");
+            // console.log("Entro");
         }
     }
 
@@ -242,5 +200,5 @@ function prob_pert(grafo) {
         }
     }
 
-    console.log("Ruta crítica:", rutaCritica);
+    // console.log("Ruta crítica:", rutaCritica);
 }
