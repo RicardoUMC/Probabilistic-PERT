@@ -74,7 +74,9 @@ function calcularPERT() {
         actividad.pesimista = parseFloat(fila.childNodes[4].value);
         actividad.promedio = (actividad.optimista + (4 * actividad.masProbable) + actividad.pesimista) / 6;
         actividad.varianza = ((actividad.pesimista - actividad.optimista) / 6) ^ 2;
-
+        
+        precedentes = fila.childNodes[1].value === '' ? [] : fila.childNodes[1].value.split(",");
+        
         // Agregar la actividad al grafo
         if (node_id == 0) {
             grafo.crearNodo(node_id + 1).siguiente.push(actividad);
@@ -82,13 +84,12 @@ function calcularPERT() {
             node_id++;
         }
 
-        else {
-            precedentes = fila.childNodes[1].value === '' ? [] : fila.childNodes[1].value.split(",");
+        else if (precedentes.length == 0) {
+            grafo.buscarNodo(node_id).siguiente.push(actividad);
+            // console.log(`Agregado (nodo existente inicial)[${grafo.buscarNodo(node_id).id}]:`, grafo.buscarNodo(node_id));
+        }
 
-            if (precedentes.length == 0) {
-                grafo.buscarNodo(node_id).siguiente.push(actividad);
-                // console.log(`Agregado (nodo existente inicial)[${grafo.buscarNodo(node_id).id}]:`, grafo.buscarNodo(node_id));
-            }
+        else {
 
             let agregada = false;
             for (let nds = 1; nds <= node_id; nds++) {
@@ -107,29 +108,29 @@ function calcularPERT() {
                 grafo.crearNodo(node_id + 1);
                 for (let nds = 1; nds <= node_id; nds++) {
                     for (const next_act of grafo.buscarNodo(nds).siguiente) {
-                        console.log("Precedentes:",precedentes);
                         for (const pre_act of precedentes) {
                             if (pre_act == next_act.actividad_id) {
                                 grafo.buscarNodo(node_id + 1).anterior.push(next_act);
                                 grafo.buscarNodo(node_id + 1).siguiente.push(actividad);
                                 // console.log(grafo.buscarNodo(nds).id);
                                 grafo.buscarNodo(node_id + 1).last_id.push(grafo.buscarNodo(nds).id);
-                                console.log(grafo.buscarNodo(node_id + 1).last_id);
-                                grafo.buscarNodo(nds).next_id.push(grafo.buscarNodo(node_id + 1).id); 
+                                // console.log(grafo.buscarNodo(node_id + 1).last_id);
+                                grafo.buscarNodo(nds).next_id.push(grafo.buscarNodo(node_id + 1).id);
                             }
                         }
                     }
                 }
-                console.log(`Agregado (nodo nuevo)[${grafo.buscarNodo(node_id + 1).id}]:`, grafo.buscarNodo(node_id + 1))
+                // console.log(`Agregado (nodo nuevo)[${grafo.buscarNodo(node_id + 1).id}]:`, grafo.buscarNodo(node_id + 1))
                 node_id++;
             }
             
         }
+        console.log("Termina una actividad");
     });
 
-    /* for (let nds = 1; nds <= node_id; nds++) {
+    for (let nds = 1; nds <= node_id; nds++) {
         console.log(grafo.buscarNodo(nds));
-    } */
+    }
 
     // console.log("Actividades:", Array.from(grafo.nodos.values()));
 
