@@ -91,31 +91,44 @@ function calcularPERT() {
 
             // Revisa si ya hay un nodo existente
             let agregada = false;
+
             for (let nds = 1; nds <= node_id; nds++) {
-                for (const ant_act of grafo.buscarNodo(nds).anterior) {
-                    for (const pre_act of precedentes) {
+                const nodoActual = grafo.buscarNodo(nds);
+
+                for (const ant_act of nodoActual.anterior) {
+                    precedentes.forEach(pre_act => {
                         if (pre_act == ant_act.actividad_id) {
-                            grafo.buscarNodo(nds).siguiente.push(actividad);
+                            nodoActual.siguiente.push(actividad);
                             agregada = true;
                         }
-                    }
+                    });
                 }
             }
 
+
             // Si no, crea un nuevo nodo
             if (!agregada) {
-                grafo.crearNodo(node_id + 1).siguiente.push(actividad);
+                const nuevoNodo = grafo.crearNodo(node_id + 1);
+                nuevoNodo.siguiente.push(actividad);
+
                 for (let nds = 1; nds <= node_id; nds++) {
-                    for (const next_act of grafo.buscarNodo(nds).siguiente) {
-                        for (const pre_act of precedentes) {
+                    var nodo = grafo.buscarNodo(nds);
+
+                    for (const next_act of nodo.siguiente) {
+                        precedentes.forEach(pre_act => {
                             if (pre_act == next_act.actividad_id) {
-                                grafo.buscarNodo(node_id + 1).anterior.push(next_act);
-                                grafo.buscarNodo(node_id + 1).last_id.push(grafo.buscarNodo(nds).id);
-                                grafo.buscarNodo(nds).next_id.push(grafo.buscarNodo(node_id + 1).id);                                
+                                nuevoNodo.anterior.push(next_act);
+                                nuevoNodo.last_id.push(nodo.id);
+                                nodo.next_id.push(nuevoNodo.id);
                             }
-                        }
+                        });
                     }
                 }
+
+                nuevoNodo.anterior = nuevoNodo.anterior.filter((valor, indice, arreglo) => arreglo.indexOf(valor) === indice);
+                nuevoNodo.last_id = nuevoNodo.last_id.filter((valor, indice, arreglo) => arreglo.indexOf(valor) === indice);
+                nodo.next_id = nodo.next_id.filter((valor, indice, arreglo) => arreglo.indexOf(valor) === indice);
+
                 node_id++;
             }
             
@@ -150,7 +163,7 @@ function calcularPERT() {
         const nuevoNodo = grafo.crearNodo(node_id + 1);
 
         for (let nds = 1; nds <= node_id; nds++) {
-            const nodo = grafo.buscarNodo(nds);
+            var nodo = grafo.buscarNodo(nds);
 
             for (const act_id of actividadesFaltantes) {
                 for (const act_nodo of nodo.siguiente) {
@@ -158,11 +171,16 @@ function calcularPERT() {
 
                         nuevoNodo.anterior.push(act_nodo);
                         nuevoNodo.last_id.push(nodo.id);
-                        nodo.next_id.push(nuevoNodo.id);   
+                        nodo.next_id.push(nuevoNodo.id);
                     }
                 }
             }
         }
+
+        nuevoNodo.anterior = nuevoNodo.anterior.filter((valor, indice, arreglo) => arreglo.indexOf(valor) === indice);
+        nuevoNodo.last_id = nuevoNodo.last_id.filter((valor, indice, arreglo) => arreglo.indexOf(valor) === indice);
+        nodo.next_id = nodo.next_id.filter((valor, indice, arreglo) => arreglo.indexOf(valor) === indice);
+
         node_id++;
     }
   
