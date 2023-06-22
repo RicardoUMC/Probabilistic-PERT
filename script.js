@@ -185,16 +185,18 @@ function calcularPERT() {
         node_id++;
     }
 
-    console.log("[Nodos]");
-    for (let nds = 1; nds <= node_id; nds++) {
-        console.log(grafo.buscarNodo(nds));
-    }
-
     // Limpiar contenido
     // tabla.innerHTML = "";
-
+    
     // Llamar a la función "prob_pert" pasándole el grafo
     prob_pert(grafo);
+    
+    console.log("[Nodos]");
+    for (let nds = 1; nds <= node_id; nds++) {
+        console.log(`Nodo [${nds}]:`);
+        console.log("TIP:", grafo.buscarNodo(nds).TIP);
+        console.log("TTT:", grafo.buscarNodo(nds).TTT);
+    }
 }
 
 function prob_pert(grafo) {
@@ -202,11 +204,11 @@ function prob_pert(grafo) {
     for (let nds = 1; nds <= grafo.nodos.size; nds++) {
         const nodo = grafo.buscarNodo(nds);
 
-        if (nodo.siguiente.length > 0) {
+        if (nodo.anterior.length > 0) {
             let tipMaximo = 0;
-            for (const anterior of nodo.last_id) {
-                const anteriorNodo = grafo.buscarNodo(anterior);
-                const tipAnterior = anteriorNodo.TIP + anteriorNodo.promedio;
+            for (const anterior of nodo.anterior) {
+                const anteriorNodo = grafo.buscarNodo(anterior.last_node);
+                const tipAnterior = anteriorNodo.TIP + anterior.promedio;
                 if (tipAnterior > tipMaximo) {
                     tipMaximo = tipAnterior;
                 }
@@ -219,15 +221,18 @@ function prob_pert(grafo) {
     // Calcular TTT (tiempo de terminación más tardía)
     for (let nds = grafo.nodos.size; nds >= 1; nds--) {
         const nodo = grafo.buscarNodo(nds);
-        let tttMinimo = nodo.TIP;
-        for (const siguiente of nodo.siguiente) {
-            const siguienteNodo = grafo.buscarNodo(siguiente.actividad_id);
-            const tttSiguiente = siguienteNodo.TTT - siguienteNodo.promedio;
-            if (!tttMinimo || tttSiguiente < tttMinimo) {
-                tttMinimo = tttSiguiente;
+
+        if (nodo.siguiente.length > 0) {
+            let tttMinimo = Infinity;
+            for (const siguiente of nodo.siguiente) {
+                const siguienteNodo = grafo.buscarNodo(siguiente.next_node);
+                const tttSiguiente = siguienteNodo.TTT - siguiente.promedio;
+                if (tttSiguiente < tttMinimo) {
+                    tttMinimo = tttSiguiente;
+                }
             }
-        }
-        nodo.TTT = tttMinimo;
+            nodo.TTT = tttMinimo;
+        } else nodo.TTT = nodo.TIP;
     }
 
     // Encontrar la duración total del proyecto
