@@ -191,12 +191,12 @@ function calcularPERT() {
     // Llamar a la función "prob_pert" pasándole el grafo
     prob_pert(grafo);
     
-    console.log("[Nodos]");
+    /* console.log("[Nodos]");
     for (let nds = 1; nds <= node_id; nds++) {
         console.log(`Nodo [${nds}]:`);
         console.log("TIP:", grafo.buscarNodo(nds).TIP);
         console.log("TTT:", grafo.buscarNodo(nds).TTT);
-    }
+    } */
 }
 
 function prob_pert(grafo) {
@@ -236,24 +236,24 @@ function prob_pert(grafo) {
     }
 
     // Encontrar la duración total del proyecto
-    const duracionTotal = grafo.buscarNodo(1).TIP;
+    const duracionTotal = grafo.buscarNodo(grafo.nodos.size).TIP;
 
     // Encontrar la ruta crítica
     const rutaCritica = [];
     let nodoActual = grafo.buscarNodo(1);
     while (nodoActual) {
-        rutaCritica.push(nodoActual.id);
-        let duracionMaxima = -Infinity;
+        // rutaCritica.push(nodoActual.id);
         let siguienteCritico = null;
+
         for (const siguiente of nodoActual.siguiente) {
-            const siguienteNodo = grafo.buscarNodo(siguiente.actividad_id);
-            const duracionSiguiente = siguienteNodo.promedio;
-            const duracionTotal = duracionSiguiente + siguienteNodo.TTT - siguienteNodo.TIP;
-            if (duracionTotal > duracionMaxima) {
-                duracionMaxima = duracionTotal;
-                siguienteCritico = siguiente.actividad_id;
+            const siguienteNodo = grafo.buscarNodo(siguiente.next_node);
+            if (siguienteNodo.TIP === siguienteNodo.TTT) {
+                rutaCritica.push(siguiente.actividad_id);
+                siguienteCritico = siguienteNodo.id;
+                break;
             }
         }
+
         if (siguienteCritico) {
             nodoActual = grafo.buscarNodo(siguienteCritico);
         } else {
