@@ -5,6 +5,8 @@ class Nodo {
         this.last_id = [];
         this.anterior = [];
         this.siguiente = [];
+        this.TTT = 0;
+        this.TIP = 0;
     }
 }
 
@@ -16,8 +18,6 @@ class Grafo {
     crearNodo(id) {
         const nuevoNodo = new Nodo(id);
         this.nodos.set(id, nuevoNodo);
-        nuevoNodo.next_id = [];
-        nuevoNodo.last_id = [];
         return nuevoNodo;
     }
 
@@ -74,23 +74,20 @@ function calcularPERT() {
         actividad.pesimista = parseFloat(fila.childNodes[4].value);
         actividad.promedio = (actividad.optimista + (4 * actividad.masProbable) + actividad.pesimista) / 6;
         actividad.varianza = ((actividad.pesimista - actividad.optimista) / 6) ^ 2;
-        
+
         precedentes = fila.childNodes[1].value === '' ? [] : fila.childNodes[1].value.split(",");
-        
+
         // Agregar la actividad al grafo
         if (node_id == 0) {
-            grafo.crearNodo(node_id + 1).siguiente.push(actividad);
+            var nodo = grafo.crearNodo(node_id + 1);
+            grafo.agregarElementoArray(nodo, 'siguiente', actividad);
             node_id++;
-        }
-
-        else if (precedentes.length == 0) {
-            grafo.buscarNodo(node_id).siguiente.push(actividad);
-        }
-
-        else {
-
+        } else if (precedentes.length == 0) {
+            var nodo = grafo.buscarNodo(node_id);
+            grafo.agregarElementoArray(nodo, 'siguiente', actividad);
+        } else {
             // Revisa si ya hay un nodo existente
-            let agregada = false;
+            var agregada = false;
 
             for (let nds = 1; nds <= node_id; nds++) {
                 const nodoActual = grafo.buscarNodo(nds);
@@ -98,18 +95,17 @@ function calcularPERT() {
                 for (const ant_act of nodoActual.anterior) {
                     precedentes.forEach(pre_act => {
                         if (pre_act == ant_act.actividad_id) {
-                            nodoActual.siguiente.push(actividad);
+                            grafo.agregarElementoArray(nodoActual, 'siguiente', actividad);
                             agregada = true;
                         }
                     });
                 }
             }
 
-
             // Si no, crea un nuevo nodo
             if (!agregada) {
                 const nuevoNodo = grafo.crearNodo(node_id + 1);
-                nuevoNodo.siguiente.push(actividad);
+                grafo.agregarElementoArray(nuevoNodo, 'siguiente', actividad);
 
                 for (let nds = 1; nds <= node_id; nds++) {
                     var nodo = grafo.buscarNodo(nds);
@@ -117,9 +113,9 @@ function calcularPERT() {
                     for (const next_act of nodo.siguiente) {
                         precedentes.forEach(pre_act => {
                             if (pre_act == next_act.actividad_id) {
-                                nuevoNodo.anterior.push(next_act);
-                                nuevoNodo.last_id.push(nodo.id);
-                                nodo.next_id.push(nuevoNodo.id);
+                                grafo.agregarElementoArray(nuevoNodo, 'anterior', next_act);
+                                grafo.agregarElementoArray(nuevoNodo, 'last_id', nodo.id);
+                                grafo.agregarElementoArray(nodo, 'next_id', nuevoNodo.id);
                             }
                         });
                     }
@@ -131,7 +127,7 @@ function calcularPERT() {
 
                 node_id++;
             }
-            
+
         }
     });
 
@@ -168,10 +164,9 @@ function calcularPERT() {
             for (const act_id of actividadesFaltantes) {
                 for (const act_nodo of nodo.siguiente) {
                     if (act_id == act_nodo.actividad_id) {
-
-                        nuevoNodo.anterior.push(act_nodo);
-                        nuevoNodo.last_id.push(nodo.id);
-                        nodo.next_id.push(nuevoNodo.id);
+                        grafo.agregarElementoArray(nuevoNodo, 'anterior', act_nodo);
+                        grafo.agregarElementoArray(nuevoNodo, 'last_id', nodo.id);
+                        grafo.agregarElementoArray(nodo, 'next_id', nuevoNodo.id);
                     }
                 }
             }
@@ -183,7 +178,7 @@ function calcularPERT() {
 
         node_id++;
     }
-  
+
     console.log("[Nodos]");
     for (let nds = 1; nds <= node_id; nds++) {
         console.log(grafo.buscarNodo(nds));
@@ -197,64 +192,55 @@ function calcularPERT() {
 }
 
 function prob_pert(grafo) {
-    // Crear un objeto para almacenar las duraciones de las actividades
-    var duraciones = {};
-
-    // Calcular la duración máxima de cada actividad recursivamente
-    function calcularDuracionMaxima(actividadId) {
-        // Verificar si ya se ha calculado la duración máxima para esta actividad
-        if (duraciones[actividadId] !== undefined) {
-            return duraciones[actividadId];
-        }
-
-        var actividad = grafo[actividadId];
-        var duracionMaxima = 0;
-
-        // Verificar si la actividad tiene sucesoras
-        if (actividad.consecuente) {
-            actividad.consecuente.forEach(sucesoraId => {
-                // Calcular la duración máxima de la sucesora
-                var duracionSucesora = calcularDuracionMaxima(sucesoraId);
-
-                // Actualizar la duración máxima si la duración de la sucesora es mayor
-                if (duracionSucesora > duracionMaxima) {
-                    duracionMaxima = duracionSucesora;
-                }
-            });
-        }
-
-        // Calcular la duración máxima de la actividad actual
-        duracionMaxima += actividad.promedio;
-
-        // Guardar la duración máxima en el objeto duraciones
-        duraciones[actividadId] = duracionMaxima;
-
-        return duracionMaxima;
+    // Calcular la duración de cada nodo
+    for (let nds = 1; nds <= grafo.nodos.length; nds++) {
+        const nodo = grafo.buscarNodo(nds);
+        nodo.duracion = calcularDuracion(nodo);
     }
 
-    // Calcular la duración máxima para cada actividad del grafo
-    for (var actividadId in grafo) {
-        dura = calcularDuracionMaxima(actividadId);
-        // console.log("Duración:",dura);
-    }
+    // Encontrar la duración total del proyecto
+    const duracionTotal = grafo.buscarNodo(1).duracion;
 
-    // Encontrar las actividades que tienen duración máxima igual a la duración total del proyecto
-    var duracionTotal = 0;
-    for (var actividadId in duraciones) {
-        if (duraciones[actividadId] > duracionTotal) {
-            duracionTotal = duraciones[actividadId];
-            // console.log("Entro");
+    // Encontrar la ruta crítica
+    const rutaCritica = [];
+
+    // Calcular el TTT (tiempo de terminación más tardía) de cada nodo
+    const ttt = new Map();
+    for (let nds = grafo.nodos.length; nds >= 1; nds--) {
+        const nodo = grafo.buscarNodo(nds);
+        let tttMaximo = 0;
+        for (const siguiente of nodo.siguiente) {
+            const siguienteNodo = grafo.buscarNodo(siguiente.actividad_id);
+            const tttSiguiente = ttt.get(siguienteNodo.id) || siguienteNodo.TTT;
+            if (tttSiguiente > tttMaximo) {
+                tttMaximo = tttSiguiente;
+            }
         }
+        nodo.TTT = nodo.duracion + tttMaximo;
+        ttt.set(nodo.id, nodo.TTT);
     }
 
-    var rutaCritica = [];
-
-    // Recorrer nuevamente las actividades y agregar las que tienen duración máxima igual a la duración total
-    for (var actividadId in duraciones) {
-        if (duraciones[actividadId] === duracionTotal) {
-            rutaCritica.push(actividadId);
+    // Encontrar la ruta crítica desde el primer nodo
+    let nodoActual = grafo.buscarNodo(1);
+    while (nodoActual.siguiente.length > 0) {
+        rutaCritica.push(nodoActual.id);
+        let duracionMaxima = -Infinity;
+        let siguienteCritico = null;
+        for (const siguiente of nodoActual.siguiente) {
+            const siguienteNodo = grafo.buscarNodo(siguiente.actividad_id);
+            const duracionSiguiente = siguienteNodo.duracion;
+            const tttSiguiente = ttt.get(siguienteNodo.id) || siguienteNodo.TTT;
+            const duracionTotal = duracionSiguiente + tttSiguiente;
+            if (duracionTotal > duracionMaxima) {
+                duracionMaxima = duracionTotal;
+                siguienteCritico = siguienteNodo;
+            }
         }
+        nodoActual = siguienteCritico;
     }
+    rutaCritica.push(nodoActual.id);
 
-    // console.log("Ruta crítica:", rutaCritica);
+    // Mostrar los resultados por consola
+    console.log("Duración total del proyecto: " + duracionTotal);
+    console.log("Ruta crítica: " + rutaCritica.join(" -> "));
 }
