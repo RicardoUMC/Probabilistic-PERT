@@ -44,7 +44,7 @@ class Grafo {
             for (const siguiente of nodoActual.siguiente) {
                 const siguienteNodo = this.buscarNodo(siguiente.next_node);
                 if (siguienteNodo.TIP === siguienteNodo.TTT) {
-                    rutaCritica.push(siguiente.actividad_id);
+                    rutaCritica.push(siguiente);
                     siguienteCritico = siguienteNodo.id;
                     break;
                 }
@@ -69,12 +69,12 @@ function generarTabla() {
     tabla.innerHTML = "";
 
     // Crear encabezado de la tabla
-    var encabezado = "<div class='tabla-encabezado'><h3>Actividad</h3><h3>Actividades precedentes</h3><h3>Tiempo optimista</h3><h3>Tiempo más probable</h3><h3>Tiempo pesimista</h3></div>";
+    var encabezado = "<div class='tabla-encabezado'><h3>Actividad</h3><h3>Actividades precedentes</h3><h3>Tiempo optimista</h3><h3>Tiempo más probable</h3><h3>Tiempo pesimista</h3><h3>Tiempo promedio</h3><h3>Varianza</h3></div>";
     tabla.innerHTML += encabezado;
 
     // Crear filas de actividades
     for (var i = 0; i < cantidad; i++) {
-        var fila = "<div class='fila-actividad'><p  id=" + (i + 1) + ">Actividad " + (i + 1) + "</p><input type='text' placeholder='Actividades precedentes' value='1'><input type='number' placeholder='Tiempo optimista' value='1'><input type='number' placeholder='Tiempo más probable' value='1'><input type='number' placeholder='Tiempo pesimista' value='1'></div>";
+        var fila = "<div class='fila-actividad'><p  id=" + (i + 1) + ">Actividad " + (i + 1) + "</p><input type='text' placeholder='Actividades precedentes' value='1'><input type='number' placeholder='Tiempo optimista' value='1'><input type='number' placeholder='Tiempo más probable' value='1'><input type='number' placeholder='Tiempo pesimista' value='1'><p></p><p></p></div>";
         tabla.innerHTML += fila;
     }
 
@@ -100,7 +100,9 @@ function calcularPERT() {
         actividad.masProbable = parseFloat(fila.childNodes[3].value);
         actividad.pesimista = parseFloat(fila.childNodes[4].value);
         actividad.promedio = (actividad.optimista + (4 * actividad.masProbable) + actividad.pesimista) / 6;
-        actividad.varianza = ((actividad.pesimista - actividad.optimista) / 6) ^ 2;
+        fila.childNodes[5].textContent = actividad.promedio;
+        actividad.varianza = ((actividad.pesimista - actividad.optimista) / 6) ** 2;
+        fila.childNodes[6].textContent = actividad.varianza;
 
         precedentes = fila.childNodes[1].value === '' ? [] : fila.childNodes[1].value.split(",");
 
@@ -247,17 +249,45 @@ function calcularPERT() {
     tituloDuracion.textContent = `Duración total del proyecto:`;
     parrafoDuracion.textContent = `${duracionTotal} semanas.`;
     tituloRuta.textContent = `Ruta crítica:`;
-    parrafoRuta.textContent = `${rutaCritica.join(" => ")}`;
+
+    const rutaCriticaArray = []
+    rutaCritica.forEach(actividad => {
+        rutaCriticaArray.push(actividad.actividad_id)
+    });
+
+    parrafoRuta.textContent = `A${rutaCriticaArray.join(" => A")}`;
+
+
+    // Crear el elemento contenedor ruta
+    const divVarianza = document.createElement("div");
+    divVarianza.classList.add("result-content");
+
+    // Crear los elementos de título y párrafo para la duración total del proyecto
+    const tituloVarianza = document.createElement("h4");
+    const parrafoVarianza = document.createElement("p");
+    
+    let varianzaProyecto = 0;
+    rutaCritica.forEach(actividad => {
+        varianzaProyecto += actividad.varianza;
+    });
+    varianzaProyecto = varianzaProyecto ** (1/2);
+
+    // Establecer el contenido de la varianza
+    tituloVarianza.textContent = `Varianza del proyecto:`;
+    parrafoVarianza.textContent = `${varianzaProyecto}`;
 
     // Agregar los elementos a los contenedores
     divDuracion.appendChild(tituloDuracion);
     divDuracion.appendChild(parrafoDuracion);
     divRuta.appendChild(tituloRuta);
     divRuta.appendChild(parrafoRuta);
+    divVarianza.appendChild(tituloVarianza);
+    divVarianza.appendChild(parrafoVarianza);
     
     // Agregar los elementos al contenedor principal
     resultado.appendChild(divDuracion);
     resultado.appendChild(divRuta);
+    resultado.appendChild(divVarianza);
 
     /* console.log("[Nodos]");
     for (let nds = 1; nds <= node_id; nds++) {

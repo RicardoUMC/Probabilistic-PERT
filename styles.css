@@ -49,32 +49,33 @@ button:hover {
 
 .tabla-encabezado {
     display: grid;
-    grid-template-columns: repeat(5, 1fr);
+    grid-template-columns: repeat(7, 1fr);
     background-color: #E0E0E0;
     padding: 8px;
 }
 
 .tabla-encabezado h3 {
     font-size: 14px;
+    max-width: 90px;
     color: #333;
     margin: 0;
 }
 
 .fila-actividad {
     display: grid;
-    grid-template-columns: repeat(5, 1fr);
+    grid-template-columns: repeat(7, 1fr);
     background-color: #FFFFFF;
-}
-
-.fila-actividad p {
-    margin: 0;
-    border: 1px solid black;
 }
 
 .fila-actividad p, .fila-actividad input {
     padding: 4px;
     font-size: 14px;
     width: auto;
+}
+
+.fila-actividad p {
+    margin: 0;
+    border: 1px solid black;
 }
 
 #calcular-pert {
