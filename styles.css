@@ -41,7 +41,7 @@ button:hover {
     background-color: #FFBF00;
 }
 
-#tabla-actividades {
+#tabla-actividades, #resultado {
     display: flex;
     flex-direction: column;
     margin-top: 20px;
@@ -87,4 +87,17 @@ button:hover {
     width: auto;
     padding: 6px 12px;
     font-size: 14px;
+}
+
+.result-content {
+    display: flex;
+}
+
+.result-content>* {
+    margin: 12px 0;
+}
+
+.result-content p {
+    align-self: center;
+    padding-left: 10px;
 }

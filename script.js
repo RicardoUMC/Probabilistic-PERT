@@ -32,6 +32,33 @@ class Grafo {
     buscarElementoArray(nodo, arrayNombre, elementoId) {
         return nodo[arrayNombre].find((elemento) => elemento.id === elementoId);
     }
+
+    rutaCritica() {
+        // Encontrar la ruta crítica
+        const rutaCritica = [];
+        let nodoActual = this.buscarNodo(1);
+        while (nodoActual) {
+            // rutaCritica.push(nodoActual.id);
+            let siguienteCritico = null;
+
+            for (const siguiente of nodoActual.siguiente) {
+                const siguienteNodo = this.buscarNodo(siguiente.next_node);
+                if (siguienteNodo.TIP === siguienteNodo.TTT) {
+                    rutaCritica.push(siguiente.actividad_id);
+                    siguienteCritico = siguienteNodo.id;
+                    break;
+                }
+            }
+
+            if (siguienteCritico) {
+                nodoActual = this.buscarNodo(siguienteCritico);
+            } else {
+                nodoActual = null;
+            }
+        }
+
+        return rutaCritica;
+    }
 }
 
 function generarTabla() {
@@ -190,7 +217,48 @@ function calcularPERT() {
     
     // Llamar a la función "prob_pert" pasándole el grafo
     prob_pert(grafo);
+
+    // Encontrar la duración total del proyecto
+    const duracionTotal = grafo.buscarNodo(grafo.nodos.size).TIP;
+
+    // Encontrar la ruta crítica
+    const rutaCritica = grafo.rutaCritica();
+
+    // Seleccionar el elemento resultado del PERT
+    const resultado = document.getElementById("resultado");
+
+    // Crear el elemento contenedor duración
+    const divDuracion = document.createElement("div");
+    divDuracion.classList.add("result-content");
     
+    // Crear el elemento contenedor ruta
+    const divRuta = document.createElement("div");
+    divRuta.classList.add("result-content");
+
+    // Crear los elementos de título y párrafo para la duración total del proyecto
+    const tituloDuracion = document.createElement("h4");
+    const parrafoDuracion = document.createElement("p");
+
+    // Crear los elementos de título y párrafo para la ruta crítica
+    const tituloRuta = document.createElement("h4");
+    const parrafoRuta = document.createElement("p");
+
+    // Establecer el contenido de los elementos
+    tituloDuracion.textContent = `Duración total del proyecto:`;
+    parrafoDuracion.textContent = `${duracionTotal} semanas.`;
+    tituloRuta.textContent = `Ruta crítica:`;
+    parrafoRuta.textContent = `${rutaCritica.join(" => ")}`;
+
+    // Agregar los elementos a los contenedores
+    divDuracion.appendChild(tituloDuracion);
+    divDuracion.appendChild(parrafoDuracion);
+    divRuta.appendChild(tituloRuta);
+    divRuta.appendChild(parrafoRuta);
+    
+    // Agregar los elementos al contenedor principal
+    resultado.appendChild(divDuracion);
+    resultado.appendChild(divRuta);
+
     /* console.log("[Nodos]");
     for (let nds = 1; nds <= node_id; nds++) {
         console.log(`Nodo [${nds}]:`);
@@ -234,34 +302,4 @@ function prob_pert(grafo) {
             nodo.TTT = tttMinimo;
         } else nodo.TTT = nodo.TIP;
     }
-
-    // Encontrar la duración total del proyecto
-    const duracionTotal = grafo.buscarNodo(grafo.nodos.size).TIP;
-
-    // Encontrar la ruta crítica
-    const rutaCritica = [];
-    let nodoActual = grafo.buscarNodo(1);
-    while (nodoActual) {
-        // rutaCritica.push(nodoActual.id);
-        let siguienteCritico = null;
-
-        for (const siguiente of nodoActual.siguiente) {
-            const siguienteNodo = grafo.buscarNodo(siguiente.next_node);
-            if (siguienteNodo.TIP === siguienteNodo.TTT) {
-                rutaCritica.push(siguiente.actividad_id);
-                siguienteCritico = siguienteNodo.id;
-                break;
-            }
-        }
-
-        if (siguienteCritico) {
-            nodoActual = grafo.buscarNodo(siguienteCritico);
-        } else {
-            nodoActual = null;
-        }
-    }
-
-    // Mostrar los resultados por consola
-    console.log("Duración total del proyecto: " + duracionTotal);
-    console.log("Ruta crítica: " + rutaCritica.join(" -> "));
 }
