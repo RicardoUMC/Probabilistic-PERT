@@ -41,7 +41,7 @@ button:hover {
     background-color: #FFBF00;
 }
 
-#tabla-actividades, #resultado {
+#tabla-actividades {
     display: flex;
     flex-direction: column;
     margin-top: 20px;
@@ -78,16 +78,30 @@ button:hover {
     border: 1px solid black;
 }
 
-#calcular-pert {
-    margin-top: 20px;
+.button-container {
+    margin-top: 12px;
     display: flex;
     justify-content: flex-end;
 }
 
-#calcular-pert button {
+.button-container button {
     width: auto;
+    margin: 0;
     padding: 6px 12px;
     font-size: 14px;
+}
+
+#resultado {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-areas: 
+    "left right"
+    "left right"
+    "bottom bottom";
+}
+
+#resultado .button-container {
+    grid-area: bottom;
 }
 
 .result-content {

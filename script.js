@@ -33,6 +33,43 @@ class Grafo {
         return nodo[arrayNombre].find((elemento) => elemento.id === elementoId);
     }
 
+    prob_pert() {
+        // Calcular TIP (tiempo de inicio más próximo)
+        for (let nds = 1; nds <= this.nodos.size; nds++) {
+            const nodo = this.buscarNodo(nds);
+
+            if (nodo.anterior.length > 0) {
+                let tipMaximo = 0;
+                for (const anterior of nodo.anterior) {
+                    const anteriorNodo = this.buscarNodo(anterior.last_node);
+                    const tipAnterior = anteriorNodo.TIP + anterior.promedio;
+                    if (tipAnterior > tipMaximo) {
+                        tipMaximo = tipAnterior;
+                    }
+                }
+                nodo.TIP = tipMaximo;
+            }
+
+        }
+
+        // Calcular TTT (tiempo de terminación más tardía)
+        for (let nds = this.nodos.size; nds >= 1; nds--) {
+            const nodo = this.buscarNodo(nds);
+
+            if (nodo.siguiente.length > 0) {
+                let tttMinimo = Infinity;
+                for (const siguiente of nodo.siguiente) {
+                    const siguienteNodo = this.buscarNodo(siguiente.next_node);
+                    const tttSiguiente = siguienteNodo.TTT - siguiente.promedio;
+                    if (tttSiguiente < tttMinimo) {
+                        tttMinimo = tttSiguiente;
+                    }
+                }
+                nodo.TTT = tttMinimo;
+            } else nodo.TTT = nodo.TIP;
+        }
+    }
+
     rutaCritica() {
         // Encontrar la ruta crítica
         const rutaCritica = [];
@@ -62,6 +99,7 @@ class Grafo {
 }
 
 function generarTabla() {
+    reset();
     var cantidad = parseInt(document.getElementById("cantidad-actividades").value);
     var tabla = document.getElementById("tabla-actividades");
 
@@ -74,12 +112,12 @@ function generarTabla() {
 
     // Crear filas de actividades
     for (var i = 0; i < cantidad; i++) {
-        var fila = "<div class='fila-actividad'><p  id=" + (i + 1) + ">Actividad " + (i + 1) + "</p><input type='text' placeholder='Actividades precedentes' value='1'><input type='number' placeholder='Tiempo optimista' value='1'><input type='number' placeholder='Tiempo más probable' value='1'><input type='number' placeholder='Tiempo pesimista' value='1'><p></p><p></p></div>";
+        var fila = "<div class='fila-actividad'><p  id=" + (i + 1) + ">Actividad " + (i + 1) + "</p><input type='text' placeholder='Actividades precedentes'><input type='number' placeholder='Tiempo optimista'><input type='number' placeholder='Tiempo más probable'><input type='number' placeholder='Tiempo pesimista'><p></p><p></p></div>";
         tabla.innerHTML += fila;
     }
 
     // Agregar botón "Calcular PERT"
-    tabla.innerHTML += "<div id='calcular - pert'><button onclick = 'calcularPERT()'> Calcular PERT</button></div >";
+    tabla.innerHTML += "<div class='button-container'><button onclick = 'calcularPERT()'> Calcular PERT</button></div >";
 }
 
 function calcularPERT() {
@@ -213,123 +251,51 @@ function calcularPERT() {
 
         node_id++;
     }
-
-    // Limpiar contenido
-    // tabla.innerHTML = "";
     
     // Llamar a la función "prob_pert" pasándole el grafo
-    prob_pert(grafo);
+    grafo.prob_pert();
 
     // Encontrar la duración total del proyecto
     const duracionTotal = grafo.buscarNodo(grafo.nodos.size).TIP;
 
-    // Encontrar la ruta crítica
+    // Encontrar la ruta crítica y array de actividades
     const rutaCritica = grafo.rutaCritica();
-
-    // Seleccionar el elemento resultado del PERT
-    const resultado = document.getElementById("resultado");
-
-    // Crear el elemento contenedor duración
-    const divDuracion = document.createElement("div");
-    divDuracion.classList.add("result-content");
-    
-    // Crear el elemento contenedor ruta
-    const divRuta = document.createElement("div");
-    divRuta.classList.add("result-content");
-
-    // Crear los elementos de título y párrafo para la duración total del proyecto
-    const tituloDuracion = document.createElement("h4");
-    const parrafoDuracion = document.createElement("p");
-
-    // Crear los elementos de título y párrafo para la ruta crítica
-    const tituloRuta = document.createElement("h4");
-    const parrafoRuta = document.createElement("p");
-
-    // Establecer el contenido de los elementos
-    tituloDuracion.textContent = `Duración total del proyecto:`;
-    parrafoDuracion.textContent = `${duracionTotal} semanas.`;
-    tituloRuta.textContent = `Ruta crítica:`;
-
     const rutaCriticaArray = []
     rutaCritica.forEach(actividad => {
         rutaCriticaArray.push(actividad.actividad_id)
     });
-
-    parrafoRuta.textContent = `A${rutaCriticaArray.join(" => A")}`;
-
-
-    // Crear el elemento contenedor ruta
-    const divVarianza = document.createElement("div");
-    divVarianza.classList.add("result-content");
-
-    // Crear los elementos de título y párrafo para la duración total del proyecto
-    const tituloVarianza = document.createElement("h4");
-    const parrafoVarianza = document.createElement("p");
     
+    // Cálculo de la varianza del proyecto
     let varianzaProyecto = 0;
     rutaCritica.forEach(actividad => {
         varianzaProyecto += actividad.varianza;
     });
-    varianzaProyecto = varianzaProyecto ** (1/2);
-
-    // Establecer el contenido de la varianza
-    tituloVarianza.textContent = `Varianza del proyecto:`;
-    parrafoVarianza.textContent = `${varianzaProyecto}`;
-
-    // Agregar los elementos a los contenedores
-    divDuracion.appendChild(tituloDuracion);
-    divDuracion.appendChild(parrafoDuracion);
-    divRuta.appendChild(tituloRuta);
-    divRuta.appendChild(parrafoRuta);
-    divVarianza.appendChild(tituloVarianza);
-    divVarianza.appendChild(parrafoVarianza);
     
-    // Agregar los elementos al contenedor principal
-    resultado.appendChild(divDuracion);
-    resultado.appendChild(divRuta);
-    resultado.appendChild(divVarianza);
+    // Cálculo de la desviación estandar del proyecto
+    let desviacionProyecto = varianzaProyecto ** (1/2);
 
-    /* console.log("[Nodos]");
+    
+    // Seleccionar el elemento resultado del PERT
+    const resultado = document.getElementById("resultado");
+
+    const duracionContent = `<div class="result-content"><h4>Duración total del proyecto:</h4><p>${duracionTotal} semanas.</p></div>`;
+    const rutaCriticaContent = `<div class="result-content"><h4>Ruta crítica:</h4><p>A${rutaCriticaArray.join(" => A")}</p></div>`;
+    const varianzaContent = `<div class="result-content"><h4>Varianza del proyecto:</h4><p>${varianzaProyecto}</p></div>`;
+    const desviacionContent = `<div class="result-content"><h4>Desviación estandar del proyecto:</h4><p>${desviacionProyecto}</p></div>`;
+    const resetButton = "<div class='button-container'><button onclick = 'reset()'>Reiniciar</button></div >";
+   
+    resultado.innerHTML = duracionContent + rutaCriticaContent + varianzaContent + desviacionContent + resetButton;
+    
+    console.log("[Nodos]");
     for (let nds = 1; nds <= node_id; nds++) {
-        console.log(`Nodo [${nds}]:`);
+        console.log(`Nodo [${nds}]:`, grafo.buscarNodo(nds));
         console.log("TIP:", grafo.buscarNodo(nds).TIP);
         console.log("TTT:", grafo.buscarNodo(nds).TTT);
-    } */
+    }
+
 }
 
-function prob_pert(grafo) {
-    // Calcular TIP (tiempo de inicio más próximo)
-    for (let nds = 1; nds <= grafo.nodos.size; nds++) {
-        const nodo = grafo.buscarNodo(nds);
-
-        if (nodo.anterior.length > 0) {
-            let tipMaximo = 0;
-            for (const anterior of nodo.anterior) {
-                const anteriorNodo = grafo.buscarNodo(anterior.last_node);
-                const tipAnterior = anteriorNodo.TIP + anterior.promedio;
-                if (tipAnterior > tipMaximo) {
-                    tipMaximo = tipAnterior;
-                }
-            }
-            nodo.TIP = tipMaximo;
-        }
-
-    }
-
-    // Calcular TTT (tiempo de terminación más tardía)
-    for (let nds = grafo.nodos.size; nds >= 1; nds--) {
-        const nodo = grafo.buscarNodo(nds);
-
-        if (nodo.siguiente.length > 0) {
-            let tttMinimo = Infinity;
-            for (const siguiente of nodo.siguiente) {
-                const siguienteNodo = grafo.buscarNodo(siguiente.next_node);
-                const tttSiguiente = siguienteNodo.TTT - siguiente.promedio;
-                if (tttSiguiente < tttMinimo) {
-                    tttMinimo = tttSiguiente;
-                }
-            }
-            nodo.TTT = tttMinimo;
-        } else nodo.TTT = nodo.TIP;
-    }
+function reset() {
+    document.getElementById('tabla-actividades').innerHTML = "";
+    document.getElementById('resultado').innerHTML = "";
 }
